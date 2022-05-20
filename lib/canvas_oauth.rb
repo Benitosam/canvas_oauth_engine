@@ -8,6 +8,7 @@ require "canvas_oauth/canvas_application"
 require 'canvas_oauth/canvas_api'
 require 'canvas_oauth/canvas_api_extensions'
 require 'canvas_oauth/canvas_config'
+require 'canvas_oauth/default_utf8_parser'
 
 module CanvasOauth
   mattr_accessor :app_root

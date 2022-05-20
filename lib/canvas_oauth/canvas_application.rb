@@ -11,7 +11,8 @@ module CanvasOauth
       rescue_from CanvasApi::Authenticate, with: :reauthenticate
       rescue_from CanvasApi::Unauthorized, with: :unauthorized_canvas_access
 
-      before_filter :request_canvas_authentication
+      before_action :check_for_reauthentication
+      before_action :request_canvas_authentication
     end
 
     protected
@@ -35,11 +36,23 @@ module CanvasOauth
     end
 
     def not_acceptable
-      render text: "Unable to process request", status: 406
+      render plain: "Unable to process request", status: 406
     end
 
     def unauthorized_canvas_access
-      render text: "Your Canvas Developer Key is not authorized to access this data.", status: 401
+      render plain: "Your Canvas Developer Key is not authorized to access this data.", status: 401
+    end
+
+    def check_for_reauthentication
+      user_id = session[:user_id]
+      tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
+      user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
+      if user_details.present?
+        expire_at = user_details.created_at.utc + 1.hour
+        if Time.now.utc > expire_at
+          reauthenticate
+        end
+      end
     end
 
     def reauthenticate

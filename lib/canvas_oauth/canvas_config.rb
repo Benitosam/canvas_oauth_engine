@@ -21,7 +21,7 @@ module CanvasOauth
         self.key = ENV['CANVAS_KEY']
         self.secret = ENV['CANVAS_SECRET']
       else
-        raise "Warning: Canvas key and secret not configured (RAILS_ENV = #{ENV['RAILS_ENV']})."
+        warn "Warning: Canvas key and secret not configured (RAILS_ENV = #{ENV['RAILS_ENV']})."
       end
     end
   end

@@ -1,4 +1,4 @@
-class CreateCanvasOauthAuthorizations < ActiveRecord::Migration
+class CreateCanvasOauthAuthorizations < ActiveRecord::Migration[4.2]
   def change
     create_table "canvas_oauth_authorizations", :force => true do |t|
       t.integer  "canvas_user_id", :limit => 8

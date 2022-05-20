@@ -7,6 +7,10 @@ module CanvasOauth
     attr_reader :canvas_url
 
     def initialize(canvas_url, token, key, secret)
+      unless [key, secret].all?(&:present?)
+        raise "Invalid Canvas oAuth configuration"
+      end
+
       self.canvas_url = canvas_url
       self.token = token
       self.key = key
@@ -42,22 +46,18 @@ module CanvasOauth
       end
     end
 
-    def paginated_get(*params)
-      params[1] ||= {}
-      params[1][:query] ||= {}
-      params[1][:query][:per_page] = PER_PAGE
+    def paginated_get(url, params = {})
+      params[:query] ||= {}
+      params[:query][:per_page] = PER_PAGE
 
       all_pages = []
 
-      while params[0] do
-        if current_page = authenticated_get(*params)
-          all_pages += current_page if valid_page?(current_page)
+      while url && current_page = authenticated_get(url, params) do
+        all_pages.concat(current_page) if valid_page?(current_page)
 
-          links = LinkHeader.parse(current_page.headers['link'])
-          params[0] = links.find_link(["rel", "next"]).try(:href)
-        else
-          params[0] = nil
-        end
+        links = LinkHeader.parse(current_page.headers['link'])
+        url = links.find_link(["rel", "next"]).try(:href)
+        params[:query] = nil if params[:query]
       end
 
       all_pages
@@ -66,7 +66,7 @@ module CanvasOauth
     def get_report(account_id, report_type, params)
       report = authenticated_post("/api/v1/accounts/#{account_id}/reports/#{report_type}", { body: params })
       report = authenticated_get "/api/v1/accounts/#{account_id}/reports/#{report_type}/#{report['id']}"
-      while report['status'] == 'running'
+      while (report['status'] == 'created' || report['status'] == 'running')
         sleep(4)
         report = authenticated_get "/api/v1/accounts/#{account_id}/reports/#{report_type}/#{report['id']}"
       end
@@ -74,7 +74,7 @@ module CanvasOauth
       if report['status'] == 'complete'
         file_id = report['file_url'].match(/files\/([0-9]+)\/download/)[1]
         file = get_file(file_id)
-        return hash_csv(self.class.get(file['url'], limit: 15).parsed_response)
+        return hash_csv(self.class.get(file['url'], limit: 15, parser: DefaultUTF8Parser).parsed_response)
       else
         return report
       end
@@ -96,7 +96,7 @@ module CanvasOauth
     def hash_csv(csv_string)
       require 'csv'
 
-      csv = CSV.parse(csv_string)
+      csv = csv_string.is_a?(String) ? CSV.parse(csv_string) : csv_string
       headers = csv.shift
       output = []
 
@@ -195,8 +195,16 @@ module CanvasOauth
       authenticated_post "/api/v1/courses/#{course_id}/assignments", { body: { assignment: params } }
     end
 
+    def update_assignment(course_id, assignment_id, params)
+      authenticated_put "/api/v1/courses/#{course_id}/assignments/#{assignment_id}", { body: { assignment: params } }
+    end
+
     def grade_assignment(course_id, assignment_id, user_id, params)
       authenticated_put "/api/v1/courses/#{course_id}/assignments/#{assignment_id}/submissions/#{user_id}", { body: params }
+    end
+
+    def get_submission(course_id, assignment_id, user_id)
+      authenticated_get "/api/v1/courses/#{course_id}/assignments/#{assignment_id}/submissions/#{user_id}"
     end
 
     def course_account_id(course_id)
