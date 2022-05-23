@@ -72,6 +72,14 @@ module CanvasOauth
       session[:user_id]
     end
 
+    def course_id
+      session[:course_id]
+    end
+
+    def enrollment_type
+     session[:ext_roles].include? "urn:lti:role:ims/lis/Instructor"
+    end
+
     def tool_consumer_instance_guid
       session[:tool_consumer_instance_guid]
     end

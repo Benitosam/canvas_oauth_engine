@@ -5,7 +5,7 @@ module CanvasOauth
     def oauth
       if verify_oauth2_state(params[:state]) && params[:code]
         if token = canvas.get_access_token(params[:code])
-          if CanvasOauth::Authorization.cache_token(token, user_id, tool_consumer_instance_guid)
+          if CanvasOauth::Authorization.cache_token(token, user_id, tool_consumer_instance_guid, course_id, enrollment_type)
             redirect_to main_app.root_path
           else
             render plain: "Error: unable to save token"
