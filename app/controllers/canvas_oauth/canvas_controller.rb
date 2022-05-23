@@ -25,7 +25,6 @@ module CanvasOauth
                 redirect_to redirect_path
               end
             end
-            redirect_to params["redirect_to"]
           else
             render plain: "Error: unable to save token"
           end
