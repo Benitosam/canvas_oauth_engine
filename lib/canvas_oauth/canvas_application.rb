@@ -31,7 +31,8 @@ module CanvasOauth
     def request_canvas_authentication
       if !params[:code].present? && !canvas_token.present?
         session[:oauth2_state] = SecureRandom.urlsafe_base64(24)
-        redirect_to canvas.auth_url(canvas_oauth_url, session[:oauth2_state])
+        redirect_url = canvas_oauth_url+"?redirect_to=#{response.request.fullpath}"
+        redirect_to canvas.auth_url(redirect_url, session[:oauth2_state])
       end
     end
 
@@ -70,14 +71,6 @@ module CanvasOauth
 
     def user_id
       session[:user_id]
-    end
-
-    def course_id
-      session[:course_id]
-    end
-
-    def enrollment_type
-     session[:ext_roles].include? "urn:lti:role:ims/lis/Instructor"
     end
 
     def tool_consumer_instance_guid
