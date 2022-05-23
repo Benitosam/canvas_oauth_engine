@@ -1,4 +1,4 @@
 module CanvasOauth
-  class AuthorizedUser < ApplicationRecord
+  class AuthorizedUser < ActiveRecord::Base
   end
 end

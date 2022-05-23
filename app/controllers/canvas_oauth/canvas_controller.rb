@@ -8,7 +8,7 @@ module CanvasOauth
           if CanvasOauth::Authorization.cache_token(token, user_id, tool_consumer_instance_guid)
             redirect_path = params["redirect_to"]
             course_id = session[:course_id]
-            check_for_authorized_user = CreateAuthorizedUser.where(course_id: course_id).first
+            check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
             unless check_for_authorized_user.present?
               if session[:ext_roles].present?
                 if (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator")
@@ -21,7 +21,7 @@ module CanvasOauth
                 elsif redirect_path == "/leaderboards"
                   feature_name = "Leaderboard"
                 end
-                CreateAuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
+                CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
                 redirect_to redirect_path
               end
             end
