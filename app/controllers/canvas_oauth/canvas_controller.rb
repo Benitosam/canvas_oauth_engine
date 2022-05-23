@@ -21,7 +21,7 @@ module CanvasOauth
                 elsif redirect_path == "/leaderboards"
                   feature_name = "Leaderboard"
                 end
-                CreateAuthorizedUser.where(user_id: user_id, enrollment_type: user_roll, course_id: course_id, feature: feature_name).create!
+                CreateAuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
                 redirect_to redirect_path
               end
             end
