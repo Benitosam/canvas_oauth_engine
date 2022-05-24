@@ -11,6 +11,7 @@ module CanvasOauth
       rescue_from CanvasApi::Authenticate, with: :reauthenticate
       rescue_from CanvasApi::Unauthorized, with: :unauthorized_canvas_access
 
+      before_action :check_for_activation
       before_action :check_for_reauthentication
       before_action :request_canvas_authentication
     end
@@ -52,6 +53,17 @@ module CanvasOauth
         expire_at = user_details.created_at.utc + 1.hour
         if Time.now.utc > expire_at
           reauthenticate
+        end
+      end
+    end
+
+    def check_for_activation
+      is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id]).present?
+      unless is_activated
+        if session[:ext_roles].present? && (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Student")
+          render plain: "The application is not yet activated, please contact your teacher to active it."
+        elsif (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator") || (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor")
+          request_canvas_authentication
         end
       end
     end
