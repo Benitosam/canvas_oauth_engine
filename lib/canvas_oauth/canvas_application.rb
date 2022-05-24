@@ -11,7 +11,7 @@ module CanvasOauth
       rescue_from CanvasApi::Authenticate, with: :reauthenticate
       rescue_from CanvasApi::Unauthorized, with: :unauthorized_canvas_access
 
-      before_action :check_for_activation
+      before_action :check_for_app_activation
       before_action :check_for_reauthentication
       before_action :request_canvas_authentication
     end
@@ -57,7 +57,7 @@ module CanvasOauth
       end
     end
 
-    def check_for_activation
+    def check_for_app_activation
       is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id]).present?
       unless is_activated
         if session[:ext_roles].present? && (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Student")
