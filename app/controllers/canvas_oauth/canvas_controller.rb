@@ -4,16 +4,16 @@ module CanvasOauth
 
     def oauth
       if verify_oauth2_state(params[:state]) && params[:code]
-        if token = canvas.get_access_token(params[:code])
+        if (token = canvas.get_access_token(params[:code]))
           if CanvasOauth::Authorization.cache_token(token, user_id, tool_consumer_instance_guid)
             redirect_path = params["redirect_to"]
             course_id = session[:course_id]
             check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
             unless check_for_authorized_user.present?
               if session[:ext_roles].present?
-                if (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator")
+                if session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator"
                   user_roll = 'Admin'
-                elsif (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor")
+                elsif session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor"
                   user_roll = 'Teacher'
                 end
                 if redirect_path == "/referrals"
