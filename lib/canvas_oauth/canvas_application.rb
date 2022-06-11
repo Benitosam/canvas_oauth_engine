@@ -67,7 +67,7 @@ module CanvasOauth
       refresh_token_expires_at = refresh_token_detail.last_used_at.utc + refresh_token_detail.expires_in.to_i
       if Time.now.utc > refresh_token_expires_at
         new_access_token_details = get_new_access_token(old_refresh_token)
-        CanvasOauth::Authorization.update(token: new_access_token_details[0][0], expires_in: new_access_token_details[0][1])
+        CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id).update(token: new_access_token_details[0][0], expires_in: new_access_token_details[0][1])
       end
     end
 
