@@ -4,8 +4,10 @@ module CanvasOauth
 
     def oauth
       if verify_oauth2_state(params[:state]) && params[:code]
-        if (token = canvas.get_access_token(params[:code]))
-          if CanvasOauth::Authorization.cache_token(token, user_id, tool_consumer_instance_guid)
+        if (token_details = canvas.get_access_token(params[:code]))
+          access_token = token_details[0][0]
+          refresh_token = token_details[0][1]
+          if CanvasOauth::Authorization.cache_token(access_token, user_id, tool_consumer_instance_guid, refresh_token)
             redirect_path = params["redirect_to"]
             course_id = session[:course_id]
             check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first

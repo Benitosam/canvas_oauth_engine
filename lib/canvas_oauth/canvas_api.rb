@@ -229,6 +229,7 @@ module CanvasOauth
     end
 
     def get_access_token(code)
+      token_details = []
       params = {
         body: {
           client_id: key,
@@ -238,7 +239,9 @@ module CanvasOauth
       }
 
       response = self.class.post '/login/oauth2/token', params
-      self.token = response['access_token']
+      access_token = response['access_token']
+      refresh_token = response['refresh_token']
+      token_details << [access_token, refresh_token]
     end
 
     def hex_sis_id(name, value)
