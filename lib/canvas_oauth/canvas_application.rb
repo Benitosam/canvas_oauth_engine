@@ -46,6 +46,18 @@ module CanvasOauth
     end
 
     def check_for_reauthentication
+      user_id = session[:user_id]
+      tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
+      user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
+      if user_details.present?
+        expire_at = user_details.created_at.utc + 1.hour
+        if Time.now.utc > expire_at
+          check_for_access_token_expiration
+        end
+      end
+    end
+
+    def check_for_access_token_expiration
       course_id = session[:course_id]
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
       authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
