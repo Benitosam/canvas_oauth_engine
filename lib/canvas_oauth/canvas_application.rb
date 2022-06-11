@@ -62,7 +62,7 @@ module CanvasOauth
       unless is_activated
         if session[:ext_roles].present? && (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Student")
           render plain: "The application is not yet activated, please contact your teacher to active it."
-        elsif (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator") || (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor")
+        elsif session[:ext_roles].present? && (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator") || (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor")
           request_canvas_authentication
         end
       end
