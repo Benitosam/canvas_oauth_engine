@@ -241,7 +241,8 @@ module CanvasOauth
       response = self.class.post '/login/oauth2/token', params
       access_token = response['access_token']
       refresh_token = response['refresh_token']
-      token_details << [access_token, refresh_token]
+      expires_in = response['expires_in']
+      token_details << [access_token, refresh_token, expires_in]
     end
 
     def hex_sis_id(name, value)
