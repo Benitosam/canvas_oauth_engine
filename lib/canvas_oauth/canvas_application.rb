@@ -46,15 +46,25 @@ module CanvasOauth
     end
 
     def check_for_reauthentication
-      user_id = session[:user_id]
+      course_id = session[:course_id]
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
-      user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
-      if user_details.present?
-        expire_at = user_details.created_at.utc + 1.hour
-        if Time.now.utc > expire_at
-          reauthenticate
-        end
+      authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
+      authorized_user_id = authorized_user.user_id
+      refresh_token_detail = CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
+      old_refresh_token = refresh_token_detail.refresh_token
+      refresh_token_expires_at = refresh_token_detail.last_used_at.utc + refresh_token_detail.expires_in.to_i
+      if Time.now.utc > refresh_token_expires_at
+        new_access_token_details = get_new_access_token(old_refresh_token)
+        CanvasOauth::Authorization.update(token: new_access_token_details[0][0], expires_in: new_access_token_details[0][1])
       end
+    end
+
+    def get_new_access_token(old_refresh_token)
+      new_access_token_details = []
+      response = HTTParty.post("#{LTI_CONFIG[:lms_host_url]}/login/oauth2/token?grant_type=refresh_token&client_id=#{CanvasConfig.key}&client_secret=#{CanvasConfig.secret}&refresh_token=#{old_refresh_token}")
+      new_access_token = response['access_token']
+      expires_in = response['expires_in']
+      new_access_token_details << [new_access_token, expires_in]
     end
 
     def check_for_app_activation
