@@ -8,8 +8,8 @@ module CanvasOauth
           if CanvasOauth::Authorization.cache_token(token, user_id, tool_consumer_instance_guid)
             redirect_path = params["redirect_to"]
             course_id = session[:course_id]
-            check_for_authorized_user = CanvasOauth::AuthorizedUser.where("course_id = ? AND created_at < ?", course_id, Time.now - 1.hour)
-            if check_for_authorized_user.nil?
+            check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
+            unless check_for_authorized_user.present?
               if session[:ext_roles].present?
                 if (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator")
                   user_roll = 'Admin'
@@ -21,13 +21,10 @@ module CanvasOauth
                 elsif redirect_path == "/leaderboards"
                   feature_name = "Leaderboard"
                 end
+                CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
+                redirect_to redirect_path
               end
-            elsif CanvasOauth::AuthorizedUser.where(course_id: course_id).present?
-              CanvasOauth::AuthorizedUser.update(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name)
-            else
-              CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
             end
-            redirect_to redirect_path
           else
             render plain: "Error: unable to save token"
           end
