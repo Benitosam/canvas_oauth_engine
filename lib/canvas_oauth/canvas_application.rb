@@ -18,7 +18,8 @@ module CanvasOauth
 
     protected
     def initialize_canvas
-      @canvas = ::CanvasOauth::CanvasApiExtensions.build(canvas_url, user_id, tool_consumer_instance_guid)
+      organization_id = session[:organization_id]
+      @canvas = ::CanvasOauth::CanvasApiExtensions.build(canvas_url, user_id, tool_consumer_instance_guid, organization_id)
     end
 
     def canvas
