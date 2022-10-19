@@ -51,8 +51,7 @@ module CanvasOauth
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
       user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
       if user_details.present?
-        expire_at = user_details.created_at.utc + 1.hour
-        if Time.now.utc > expire_at
+        if Time.now.utc > user_details.expires_in
           check_for_access_token_expiration
         end
       end
@@ -65,10 +64,11 @@ module CanvasOauth
       authorized_user_id = authorized_user.user_id
       refresh_token_detail = CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
       old_refresh_token = refresh_token_detail.refresh_token
-      refresh_token_expires_at = refresh_token_detail.last_used_at.utc + refresh_token_detail.expires_in.to_i
+      refresh_token_expires_at = refresh_token_detail.expires_in
       if Time.now.utc > refresh_token_expires_at
         new_access_token_details = get_new_access_token(old_refresh_token)
-        CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id).update(token: new_access_token_details[0][0], expires_in: new_access_token_details[0][1])
+        expires_in = Time.now + new_access_token_details[0][1].to_i - 5.minutes
+        CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id).update(token: new_access_token_details[0][0], expires_in: expires_in)
       end
     end
 
