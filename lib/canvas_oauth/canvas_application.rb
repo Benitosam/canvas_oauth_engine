@@ -61,7 +61,25 @@ module CanvasOauth
       course_id = session[:course_id]
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
       authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
-      authorized_user_id = authorized_user.user_id
+      if authorized_user.present?
+        authorized_user_id = authorized_user.user_id
+      else
+        redirect_path = response.request.fullpath
+        if session[:ext_roles].present?
+          if session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator"
+            user_roll = 'Admin'
+          elsif session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor"
+            user_roll = 'Teacher'
+          end
+          if redirect_path == "/referrals"
+            feature_name = "Referral system"
+          elsif redirect_path == "/leaderboards"
+            feature_name = "Leaderboard"
+          end
+          authorized_user = CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
+          authorized_user_id = authorized_user.user_id
+        end
+      end
       refresh_token_detail = CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
       old_refresh_token = refresh_token_detail.refresh_token
       refresh_token_expires_at = refresh_token_detail.expires_in
