@@ -8,8 +8,8 @@ module CanvasOauth
       end
     end
 
-    initializer "canvas_oauth.canvas_config" do |app|
-      CanvasOauth::CanvasConfig.setup!
-    end
+    # initializer "canvas_oauth.canvas_config" do |app|
+    #   CanvasOauth::CanvasConfig.setup!
+    # end
   end
 end

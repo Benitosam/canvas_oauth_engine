@@ -92,7 +92,10 @@ module CanvasOauth
 
     def get_new_access_token(old_refresh_token)
       new_access_token_details = []
-      response = HTTParty.post("#{LTI_CONFIG[:lms_host_url]}/login/oauth2/token?grant_type=refresh_token&client_id=#{CanvasConfig.key}&client_secret=#{CanvasConfig.secret}&refresh_token=#{old_refresh_token}")
+      key_secret_details = LtiProvider::Tool.where(organization_id: session[:organization_id]).first
+      key = key_secret_details.developer_key
+      secret = key_secret_details.secret
+      response = HTTParty.post("#{LTI_CONFIG[:lms_host_url]}/login/oauth2/token?grant_type=refresh_token&client_id=#{key}&client_secret=#{secret}&refresh_token=#{old_refresh_token}")
       new_access_token = response['access_token']
       expires_in = response['expires_in']
       new_access_token_details << [new_access_token, expires_in]
