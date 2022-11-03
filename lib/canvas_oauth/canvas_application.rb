@@ -105,12 +105,12 @@ module CanvasOauth
     def check_for_app_activation
       is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id]).present?
       unless is_activated
-        if session[:ext_roles].present?
-          if session[:ext_roles].include? "urn:lti:instrole:ims/lis/Student"
-            render plain: "The application is not yet activated, please contact your teacher to active it."
-          elsif (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator") || (session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor")
-            request_canvas_authentication
-          end
+        organization_id = session[:organization_id]
+        app_created_user_email = Organization.where(id: organization_id).first.email
+        if app_created_user_email == session[:canvas_user_email]
+          request_canvas_authentication
+        else
+          render plain: "The application is not yet activated, please contact #{app_created_user_email} to active it."
         end
       end
     end
