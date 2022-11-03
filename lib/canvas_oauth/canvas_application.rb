@@ -17,6 +17,7 @@ module CanvasOauth
     end
 
     protected
+
     def initialize_canvas
       tool_detail = LtiProvider::Tool.where(uuid: session[:key]).first
       organization_id = tool_detail.organization_id
@@ -34,7 +35,7 @@ module CanvasOauth
     def request_canvas_authentication
       if !params[:code].present? && !canvas_token.present?
         session[:oauth2_state] = SecureRandom.urlsafe_base64(24)
-        redirect_url = canvas_oauth_url+"?redirect_to=#{response.request.fullpath}"
+        redirect_url = canvas_oauth_url + "?redirect_to=#{response.request.fullpath}"
         redirect_to canvas.auth_url(redirect_url, session[:oauth2_state])
       end
     end
@@ -108,7 +109,11 @@ module CanvasOauth
         organization_id = session[:organization_id]
         app_created_user_email = Organization.where(id: organization_id).first.email
         if app_created_user_email == session[:canvas_user_email]
-          request_canvas_authentication
+          if session[:canvas_user_current_role] == 'Instructor'
+            request_canvas_authentication
+          else
+            render plain: "You are not a Instructor in this course please contact the Instructor."
+          end
         else
           render plain: "The application is not yet activated, please contact #{app_created_user_email} to active it."
         end
