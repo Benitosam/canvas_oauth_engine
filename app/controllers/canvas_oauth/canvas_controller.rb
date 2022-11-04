@@ -17,7 +17,9 @@ module CanvasOauth
           if CanvasOauth::Authorization.cache_token(access_token, user_id, tool_consumer_instance_guid, refresh_token, expires_in)
             course_id = session[:course_id]
             check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
-            unless check_for_authorized_user.present?
+            if check_for_authorized_user.present?
+              redirect_to redirect_path
+            else
               if session[:ext_roles].present?
                 if session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator"
                   user_roll = 'Admin'
