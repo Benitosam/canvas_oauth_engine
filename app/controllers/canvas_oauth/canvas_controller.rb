@@ -14,9 +14,11 @@ module CanvasOauth
           access_token = token_details[0][0]
           refresh_token = token_details[0][1]
           expires_in = Time.now + token_details[0][2].to_i - 5.minutes
-          if CanvasOauth::Authorization.cache_token(access_token, user_id, tool_consumer_instance_guid, refresh_token, expires_in)
+          key = session[:key]
+          app_id = LtiProvider::Tool.where(uuid: key).first
+          if CanvasOauth::Authorization.cache_token(access_token, user_id, tool_consumer_instance_guid, refresh_token, expires_in, app_id)
             course_id = session[:course_id]
-            check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
+            check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id, app_id: app_id).first
             if check_for_authorized_user.present?
               redirect_to redirect_path
             else
@@ -26,7 +28,7 @@ module CanvasOauth
                 elsif session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor"
                   user_roll = 'Teacher'
                 end
-                CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
+                CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name, app_id: app_id).create!
                 redirect_to redirect_path
               end
             end

@@ -29,7 +29,9 @@ module CanvasOauth
     end
 
     def canvas_token
-      ::CanvasOauth::Authorization.fetch_token(user_id, tool_consumer_instance_guid)
+      key = session[:key]
+      app_id = LtiProvider::Tool.where(uuid: key).first
+      ::CanvasOauth::Authorization.fetch_token(user_id, tool_consumer_instance_guid, app_id)
     end
 
     def request_canvas_authentication
@@ -50,8 +52,10 @@ module CanvasOauth
 
     def check_for_reauthentication
       user_id = session[:user_id]
+      key = session[:key]
+      app_id = LtiProvider::Tool.where(uuid: key).first
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
-      user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
+      user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid, app_id: app_id).first
       if user_details.present?
         if Time.now.utc > user_details.expires_in
           check_for_access_token_expiration
@@ -62,7 +66,9 @@ module CanvasOauth
     def check_for_access_token_expiration
       course_id = session[:course_id]
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
-      authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id).first
+      key = session[:key]
+      app_id = LtiProvider::Tool.where(uuid: key).first
+      authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id, app_id: app_id).first
       if authorized_user.present?
         authorized_user_id = authorized_user.user_id
       else
@@ -78,17 +84,17 @@ module CanvasOauth
           elsif redirect_path == "/leaderboards"
             feature_name = "Leaderboard"
           end
-          authorized_user = CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name).create!
+          authorized_user = CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name, app_id: app_id).create!
           authorized_user_id = authorized_user.user_id
         end
       end
-      refresh_token_detail = CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id, tool_consumer_instance_guid: tool_consumer_instance_guid).first
+      refresh_token_detail = CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id, tool_consumer_instance_guid: tool_consumer_instance_guid, app_id: app_id).first
       old_refresh_token = refresh_token_detail.refresh_token
       refresh_token_expires_at = refresh_token_detail.expires_in
       if Time.now.utc > refresh_token_expires_at
         new_access_token_details = get_new_access_token(old_refresh_token)
         expires_in = Time.now + new_access_token_details[0][1].to_i - 5.minutes
-        CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id).update(token: new_access_token_details[0][0], expires_in: expires_in)
+        CanvasOauth::Authorization.where(canvas_user_id: authorized_user_id, app_id: app_id).update(token: new_access_token_details[0][0], expires_in: expires_in)
       end
     end
 
@@ -104,7 +110,9 @@ module CanvasOauth
     end
 
     def check_for_app_activation
-      is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id]).present?
+      key = session[:key]
+      app_id = LtiProvider::Tool.where(uuid: key).first
+      is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id], app_id: app_id).present?
       unless is_activated
         organization_id = session[:organization_id]
         app_created_user_email = Organization.where(id: organization_id).first.email
@@ -121,7 +129,9 @@ module CanvasOauth
     end
 
     def reauthenticate
-      ::CanvasOauth::Authorization.clear_tokens(user_id, tool_consumer_instance_guid)
+      key = session[:key]
+      app_id = LtiProvider::Tool.where(uuid: key).first
+      ::CanvasOauth::Authorization.clear_tokens(user_id, tool_consumer_instance_guid, app_id)
       request_canvas_authentication
     end
 
