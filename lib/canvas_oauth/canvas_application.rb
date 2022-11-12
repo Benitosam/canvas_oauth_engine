@@ -30,7 +30,7 @@ module CanvasOauth
 
     def canvas_token
       key = session[:key]
-      app_id = LtiProvider::Tool.where(uuid: key).first
+      app_id = LtiProvider::Tool.where(uuid: key).first.id
       ::CanvasOauth::Authorization.fetch_token(user_id, tool_consumer_instance_guid, app_id)
     end
 
@@ -53,7 +53,7 @@ module CanvasOauth
     def check_for_reauthentication
       user_id = session[:user_id]
       key = session[:key]
-      app_id = LtiProvider::Tool.where(uuid: key).first
+      app_id = LtiProvider::Tool.where(uuid: key).first.id
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
       user_details = CanvasOauth::Authorization.where(canvas_user_id: user_id, tool_consumer_instance_guid: tool_consumer_instance_guid, app_id: app_id).first
       if user_details.present?
@@ -67,7 +67,7 @@ module CanvasOauth
       course_id = session[:course_id]
       tool_consumer_instance_guid = session[:tool_consumer_instance_guid]
       key = session[:key]
-      app_id = LtiProvider::Tool.where(uuid: key).first
+      app_id = LtiProvider::Tool.where(uuid: key).first.id
       authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id, app_id: app_id).first
       if authorized_user.present?
         authorized_user_id = authorized_user.user_id
@@ -111,7 +111,7 @@ module CanvasOauth
 
     def check_for_app_activation
       key = session[:key]
-      app_id = LtiProvider::Tool.where(uuid: key).first
+      app_id = LtiProvider::Tool.where(uuid: key).first.id
       is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id], app_id: app_id).present?
       unless is_activated
         organization_id = session[:organization_id]
@@ -130,7 +130,7 @@ module CanvasOauth
 
     def reauthenticate
       key = session[:key]
-      app_id = LtiProvider::Tool.where(uuid: key).first
+      app_id = LtiProvider::Tool.where(uuid: key).first.id
       ::CanvasOauth::Authorization.clear_tokens(user_id, tool_consumer_instance_guid, app_id)
       request_canvas_authentication
     end

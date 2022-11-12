@@ -15,7 +15,7 @@ module CanvasOauth
           refresh_token = token_details[0][1]
           expires_in = Time.now + token_details[0][2].to_i - 5.minutes
           key = session[:key]
-          app_id = LtiProvider::Tool.where(uuid: key).first
+          app_id = LtiProvider::Tool.where(uuid: key).first.id
           if CanvasOauth::Authorization.cache_token(access_token, user_id, tool_consumer_instance_guid, refresh_token, expires_in, app_id)
             course_id = session[:course_id]
             check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id, app_id: app_id).first
