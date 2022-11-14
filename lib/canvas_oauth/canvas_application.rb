@@ -114,16 +114,10 @@ module CanvasOauth
       app_id = LtiProvider::Tool.where(uuid: key).first.id
       is_activated = CanvasOauth::AuthorizedUser.where(course_id: session[:course_id], app_id: app_id).present?
       unless is_activated
-        organization_id = session[:organization_id]
-        app_created_user_email = Organization.where(id: organization_id).first.email
-        if app_created_user_email == session[:canvas_user_email]
-          if session[:canvas_user_current_role] == 'Instructor'  || (session[:canvas_user_current_role].include? "urn:lti:instrole:ims/lis/Administrator")
-            request_canvas_authentication
-          else
-            render plain: "You are not a Instructor in this course please contact the Instructor."
-          end
+        if session[:canvas_user_current_role] == 'Instructor' || (session[:canvas_user_current_role].include? "urn:lti:instrole:ims/lis/Administrator")
+          request_canvas_authentication
         else
-          render plain: "The application is not yet activated, please contact #{app_created_user_email} to active it."
+          render plain: "The application is not yet activated, please contact your instructor to active it."
         end
       end
     end
