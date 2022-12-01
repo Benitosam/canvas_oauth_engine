@@ -123,6 +123,8 @@ module CanvasOauth
           else
             render plain: "You are not a Instructor in this course please contact the Instructor."
           end
+        elsif CanvasOauth::AuthorizedUser.where(app_id: app_id, user_roll: 'Admin').present?
+          request_canvas_authentication
         else
           render plain: "The application is not yet activated, please contact #{app_created_user_email} to active it."
         end
