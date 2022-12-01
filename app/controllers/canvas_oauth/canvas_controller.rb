@@ -15,7 +15,8 @@ module CanvasOauth
           refresh_token = token_details[0][1]
           expires_in = Time.now + token_details[0][2].to_i - 5.minutes
           key = session[:key]
-          app_id = LtiProvider::Tool.where(uuid: key).first.id
+          app_details = LtiProvider::Tool.where(uuid: key).first
+          app_id = app_details.id
           if CanvasOauth::Authorization.cache_token(access_token, user_id, tool_consumer_instance_guid, refresh_token, expires_in, app_id)
             course_id = session[:course_id]
             check_for_authorized_user = CanvasOauth::AuthorizedUser.where(course_id: course_id, app_id: app_id).first
@@ -25,10 +26,23 @@ module CanvasOauth
               if session[:ext_roles].present?
                 if session[:ext_roles].include? "urn:lti:instrole:ims/lis/Administrator"
                   user_roll = 'Admin'
+                  responses = HTTParty.get("#{app_details.domain}/api/v1/accounts", headers: { "Authorization" => "Bearer #{access_token}" })
+                  responses.each do |response|
+                    if response.present?
+                      account_id = response["id"]
+                      course_responses = HTTParty.get("#{app_details.domain}/api/v1/accounts/#{account_id}/courses", headers: { "Authorization" => "Bearer #{access_token}" })
+                      course_responses.each do |course_response|
+                        if course_response.present?
+                          course_id = course_response["id"]
+                          CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name, app_id: app_id).create!
+                        end
+                      end
+                    end
+                  end
                 elsif session[:ext_roles].include? "urn:lti:instrole:ims/lis/Instructor"
                   user_roll = 'Teacher'
+                  CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name, app_id: app_id).create!
                 end
-                CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name, app_id: app_id).create!
                 redirect_to redirect_path
               end
             end
