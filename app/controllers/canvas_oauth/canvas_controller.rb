@@ -8,6 +8,8 @@ module CanvasOauth
         feature_name = "Referral system"
       elsif redirect_path == "/leaderboards"
         feature_name = "Leaderboard"
+      elsif redirect_path == "/enrollment-validity"
+        feature_name = "Enrollment validity"
       end
       if verify_oauth2_state(params[:state]) && params[:code]
         if (token_details = canvas.get_access_token(params[:code]))

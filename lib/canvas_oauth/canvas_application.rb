@@ -83,6 +83,8 @@ module CanvasOauth
             feature_name = "Referral system"
           elsif redirect_path == "/leaderboards"
             feature_name = "Leaderboard"
+          elsif redirect_path == "/enrollment-validity"
+            feature_name = "Enrollment validity"
           end
           authorized_user = CanvasOauth::AuthorizedUser.where(user_id: user_id, user_roll: user_roll, course_id: course_id, feature_name: feature_name, app_id: app_id).create!
           authorized_user_id = authorized_user.user_id
